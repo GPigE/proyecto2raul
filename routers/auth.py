@@ -10,22 +10,28 @@ from fastapi import Response, Depends
 from jose import JWTError
 from fastapi import Request
 from auth.token import decode_token
+from pydantic import BaseModel
 
 router = APIRouter()
 
+class RegisterRequest(BaseModel):
+    name: str
+    username: str
+    password: str
+
 @router.post("/register")
-def register(name: str, username: str, password: str):
+def register(data: RegisterRequest):
     with Session(engine) as session:
         
-        userExists = session.exec(select(User).where(User.username == username)).first()
+        userExists = session.exec(select(User).where(User.username == data.username)).first()
 
         if userExists:
           raise HTTPException(status_code=400, detail="Username already exists")
 
         user = User(
-            name=name,
-            username=username,
-            password_hash=hash_password(password)
+            name=data.name,
+            username=data.username,
+            password_hash=hash_password(data.password)
         )
 
         session.add(user)
@@ -50,7 +56,8 @@ def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
             key="access_token",
             value=token,
             httponly=True,
-            max_age=180
+            max_age=180,
+            samesite="lax",
         )
 
         return {"access_token": token, "token_type": "bearer"}

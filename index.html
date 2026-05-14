@@ -1,0 +1,87 @@
+<input id="name" placeholder="name" />
+<input id="username" placeholder="username" />
+<input id="password" type="password" placeholder="password" />
+<button onclick="register()">Register</button>
+
+<input id="loginUser" placeholder="username" />
+<input id="loginPass" type="password" placeholder="password" />
+<button onclick="login()">Entrar</button>
+
+<button onclick="me()">Mostrar información</button>
+
+<div id="userInfo" style="display: none">
+  <p><strong>Name:</strong> <span id="infoName"></span></p>
+  <p><strong>Username:</strong> <span id="infoUsername"></span></p>
+  <p id="passwordRow" style="display: none">
+    <strong>Password:</strong> <span id="infoPassword2"></span>
+  </p>
+  <p><strong>Password (hashed):</strong> <span id="infoPassword"></span></p>
+</div>
+
+<script>
+  async function register() {
+    const res = await fetch("http://127.0.0.1:8000/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        name: document.getElementById("name").value,
+        username: document.getElementById("username").value,
+        password: document.getElementById("password").value,
+      }),
+    });
+
+    if (res.ok) {
+      document.getElementById("name").value = "";
+      document.getElementById("username").value = "";
+      document.getElementById("password").value = "";
+      alert("Usuario creado");
+    } else {
+      alert("Hubo un fallo en la creación del usuario");
+    }
+  }
+
+  async function login() {
+    const form = new URLSearchParams();
+    form.append("username", document.getElementById("loginUser").value);
+    form.append("password", document.getElementById("loginPass").value);
+
+    const res = await fetch("http://127.0.0.1:8000/login", {
+      method: "POST",
+      body: form,
+      credentials: "include",
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      alert("Usuario Autenticado\nToken: " + data.access_token);
+    } else {
+      alert("Fallo en la autenticación");
+    }
+  }
+
+  async function me() {
+    const res = await fetch("http://127.0.0.1:8000/users/me", {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById("infoName").textContent = data.name;
+      document.getElementById("infoUsername").textContent = data.username;
+      document.getElementById("infoPassword").textContent = data.password_hash;
+      document.getElementById("userInfo").style.display = "block";
+
+      const passwordRow = document.getElementById("passwordRow");
+      if (data.password) {
+        document.getElementById("infoPassword2").textContent = data.password;
+        passwordRow.style.display = "block";
+      } else {
+        passwordRow.style.display = "none";
+      }
+    } else {
+      alert("Error al obtener la información del usuario");
+    }
+  }
+</script>
