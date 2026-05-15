@@ -39,13 +39,15 @@
       }),
     });
 
+    const data = await res.json().catch(() => null);
+
     if (res.ok) {
       document.getElementById("name").value = "";
       document.getElementById("username").value = "";
       document.getElementById("password").value = "";
       alert("Usuario creado");
     } else {
-      alert("Hubo un fallo en la creación del usuario");
+      alert(data?.detail || "Error al crear usuario");
     }
   }
 
